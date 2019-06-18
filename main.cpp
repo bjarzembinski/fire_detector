@@ -87,6 +87,7 @@ int main() {
 
 	//deklaracja zmiennych
 	int threshold = 60;
+	int minArea = 0;
 	bool initialized = false;
 	int fps;
 	Scalar meanYCrCb;
@@ -127,6 +128,9 @@ int main() {
 
 	//stworzenie okna dla wyswietlanego obrazu
 	namedWindow("Fire Detection", WINDOW_AUTOSIZE);
+	namedWindow("Parameters", WINDOW_AUTOSIZE);
+	createTrackbar("Threshold", "Parameters", &threshold, 100);
+	createTrackbar("Min Area", "Parameters", &minArea, 10000);
 
 	while (cap.read(frame)) {
 		//kopia klatki 
@@ -176,15 +180,15 @@ int main() {
 		
 		//narysowanie prostokata wskazujacego obszar pozaru
 		boundRect = boundingRect(firePixels);
-		rectangle(fireDetectionFrame, boundRect.tl(), boundRect.br(), CV_RGB(0, 255, 0), 2);
+		if (boundRect.area() > minArea) {
+			rectangle(fireDetectionFrame, boundRect.tl(), boundRect.br(), CV_RGB(0, 255, 0), 2);
+		}
 
 		try {
 			//wyswietlenie obrazow
 			imshow("Fire Detection", fireDetectionFrame);
-			//imshow("Obraz oryginalny", frame);
 			//imshow("maska ruchu", motionMask);
 			//imshow("maska ognia", fireMask);
-			//imshow("YCrCb", fireFrameYCrCb);
 			//imshow("Y", fireFrameY);
 			//imshow("Cr", fireFrameCr);
 			//imshow("Cb", fireFrameCb);
