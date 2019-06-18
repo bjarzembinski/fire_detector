@@ -18,7 +18,6 @@ namespace fs = std::experimental::filesystem;
 
 //zmienne globalne
 string videosPath = "C:/path/to/videos/";
-string timeOfDay = "day";
 
 // funkcja wyboru zrodla obrazu
 int menu() {
@@ -64,14 +63,7 @@ bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int 
 	int valueCr = frameCr.at<uchar>(row, column);
 	int valueCb = frameCb.at<uchar>(row, column);
 
-	if (timeOfDay == "day") {
-		condition = ((valueY > valueCb) && (valueCr > valueCb + threshold) && (valueY > meanY));
-	}
-	else {
-		condition = ((valueY > valueCb) && (valueCr > valueCb + threshold) && (valueY > 10 * meanY));
-	}
-
-	if (condition) {
+	if ((valueY > valueCb) && (valueCr > valueCb + threshold) && (valueY > meanY)) {
 		return true;
 	}
 	else {
