@@ -18,7 +18,7 @@
 #include "opencv2/EnhancedWindow.h" 
 #define WINDOW_NAME	"Detektor pozarow i eksplozji"
 
-
+//skroty klawiszowe
 #define ESC 27
 #define KAMERA 49
 #define FILM 50
@@ -27,7 +27,7 @@ using namespace cv;
 using namespace std;
 namespace fs = std::experimental::filesystem;
 
-//zmienne globalne
+//zmienne globalne dla sciezek
 string videosPath = "C:/Users/joann/Desktop/opencv/videos/"; //sciezka do folderu z filmami
 string outputpath = "C:/Users/joann/Desktop/opencv/output/"; //sciezka do folderu output
 
@@ -36,9 +36,9 @@ bool fire = false;
 bool explosion = false;
 int choice;
 
-// funkcja wyboru zrodla obrazu
+//funkcja wyboru zrodla obrazu
 int menu() {
-	
+
 	cout << "Wybierz tryb:" << endl;
 	cout << "1. KAMERA" << endl;
 	cout << "2. FILM" << endl;
@@ -64,10 +64,10 @@ int menu() {
 	return choice;
 }
 
-// funkcja pozwalajaca na wybor video
+//funkcja pozwalajaca na wybor video
 string videoChoice() {
 	cout << "Wybierz video:" << endl;
-	// wypisanie dostepnych plikow video
+	//wypisanie dostepnych plikow video
 	int i = 1;
 	for (auto entry : fs::directory_iterator(videosPath)) {
 		cout << i << ". ";
@@ -75,7 +75,7 @@ string videoChoice() {
 		i++;
 	}
 
-	// wybor video
+	//wybor video
 	int videoNumber;
 	cout << endl << "Twoj wybor:" << endl;
 	cin >> videoNumber;
@@ -88,7 +88,7 @@ string videoChoice() {
 	}
 }
 
-// funkcja przygotowuj¹ca date i czas 
+//funkcja przygotowuj¹ca date i czas 
 string prepareDateTime(string purpose) {
 	SYSTEMTIME lt;
 	GetLocalTime(&lt);
@@ -106,7 +106,7 @@ string prepareDateTime(string purpose) {
 	return locDateTime;
 }
 
-// funkcja sprawdzajaca czy piksel posiada kolor taki jak ogien
+//funkcja sprawdzajaca czy piksel posiada kolor taki jak ogien
 bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int column, int threshold, int meanY, int meanCr, int meanCb) {
 	bool condition;
 	int valueY = frameY.at<uchar>(row, column);
@@ -121,8 +121,8 @@ bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int 
 	}
 }
 
-// fukcja zapisujaca wideo z wykrytym pozarem
-VideoWriter initializeVideo(string outputVideoName, VideoWriter video) { 
+//fukcja zapisujaca wideo z wykrytym pozarem
+VideoWriter initializeVideo(string outputVideoName, VideoWriter video) {
 	string outputPath = outputpath + outputVideoName;
 	int codec = CV_FOURCC('M', 'J', 'P', 'G');
 	Size size = Size(640, 480);
@@ -155,7 +155,7 @@ int main() {
 	bool initialized = false;
 	bool use_fire = false;
 	bool use_explosion = false;
-	int fps; 
+	int fps;
 	Scalar meanYCrCb;
 	Rect boundRect;
 	Rect currentBound;
@@ -199,9 +199,8 @@ int main() {
 		}
 
 
-		//stworzenie okna dla wyswietlanego obrazu
+		//stworzenie okna dla wyswietlanego obrazu i panelu sterowania
 		EnhancedWindow settings(10, 50, 270, 200, "Panel sterowania");
-
 		cvui::init(WINDOW_NAME);
 		namedWindow(WINDOW_NAME);
 
@@ -215,10 +214,10 @@ int main() {
 			string datetimeFrame = prepareDateTime("frame");
 			string datetimeFile = prepareDateTime("filename");
 			string videoName = "fire_" + datetimeFile + ".avi";
-			
+
 			//umieszczenie daty i czasu na obrazie
 			putText(fireDetectionFrame, datetimeFrame, Point(15, 465), FONT_HERSHEY_SIMPLEX, 1.25, Scalar(255, 255, 255), 2);
-			
+
 			//inicjalizacja maski ognia
 			if (initialized == false) {
 				fireMask = Mat(frame.rows, frame.cols, CV_8UC1);
@@ -260,12 +259,12 @@ int main() {
 					}
 				}
 			}
-		
+
 			//otoczka wypuk³a dla pikseli pozaru
 			boundRect = boundingRect(firePixels);
 			//zainicjowanie pliku wideo
 			video = initializeVideo(videoName, video);
-
+			//kopia otoczki wypuklej
 			currentBound = boundRect;
 
 			//wykrywanie pozaru
@@ -294,32 +293,31 @@ int main() {
 				else explosion = false;
 			}
 
-				//uruchomienie zapisu do pliku
-				if (fire == true && choice == KAMERA)
-					recordVideo(video, fireDetectionFrame);
-				else video.release();
-			
+			//uruchomienie zapisu do pliku
+			if (fire == true && choice == KAMERA)
+				recordVideo(video, fireDetectionFrame);
+			else video.release();
 
-				//dostosowanie panelu sterowania
-				settings.begin(fireDetectionFrame);
-				if (!settings.isMinimized()) {
-					cvui::text("Treshold", 0.4, 0xff0000);
-					cvui::trackbar(settings.width() - 20, &threshold, 1, 150);
-					cvui::text("Min Area", 0.4, 0xff0000);
-					cvui::trackbar(settings.width() - 20, &minArea, 1, 10000);
-					cvui::space(10);
-					cvui::checkbox("Detekcja pozaru", &use_fire);
-					cvui::space(5);
-					cvui::checkbox("Detekcja eksplozji", &use_explosion);
-				}
-				settings.end();
+			//dostosowanie panelu sterowania
+			settings.begin(fireDetectionFrame);
+			if (!settings.isMinimized()) {
+				cvui::text("Treshold", 0.4, 0xff0000);
+				cvui::trackbar(settings.width() - 20, &threshold, 1, 150);
+				cvui::text("Min Area", 0.4, 0xff0000);
+				cvui::trackbar(settings.width() - 20, &minArea, 1, 10000);
+				cvui::space(10);
+				cvui::checkbox("Detekcja pozaru", &use_fire);
+				cvui::space(5);
+				cvui::checkbox("Detekcja eksplozji", &use_explosion);
+			}
+			settings.end();
 
 			try {
 
 				//wyswietlenie obrazow
 				cvui::imshow(WINDOW_NAME, fireDetectionFrame);
 				//imshow("maska ruchu", motionMask);
-			    //imshow("maska ognia", fireMask);
+				//imshow("maska ognia", fireMask);
 				//imshow("Y", fireFrameY);
 				//imshow("Cr", fireFrameCr);
 				//imshow("Cb", fireFrameCb);
@@ -330,7 +328,6 @@ int main() {
 				cout << e.what() << endl;
 				return 1;
 			}
-
 
 			if (waitKey(1000 / fps) == ESC) {
 				break;
