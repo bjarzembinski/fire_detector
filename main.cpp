@@ -28,8 +28,8 @@ using namespace std;
 namespace fs = std::experimental::filesystem;
 
 //zmienne globalne dla sciezek
-string videosPath = "C:/Users/joann/Desktop/opencv/videos/"; //sciezka do folderu z filmami
-string outputpath = "C:/Users/joann/Desktop/opencv/output/"; //sciezka do folderu output
+string videosPath = "C:/00 Documents/opencv/Project/videos/"; //sciezka do folderu z filmami
+string outputpath = "C:/00 Documents/opencv/Project/output/"; //sciezka do folderu output
 
 //zmienne globalne dla alarmu
 bool fire = false;
@@ -88,7 +88,7 @@ string videoChoice() {
 	}
 }
 
-//funkcja przygotowuj¹ca date i czas 
+//funkcja przygotowujaca date i czas 
 string prepareDateTime(string purpose) {
 	SYSTEMTIME lt;
 	GetLocalTime(&lt);
@@ -153,8 +153,9 @@ int main() {
 	int threshold = 60;
 	int minArea = 0;
 	bool initialized = false;
-	bool use_fire = false;
-	bool use_explosion = false;
+	bool use_fire = true;
+	bool use_explosion = true;
+	bool videoInitialized = false;
 	int fps;
 	Scalar meanYCrCb;
 	Rect boundRect;
@@ -171,23 +172,23 @@ int main() {
 		int mode = menu();
 
 		switch (mode) {
-		case KAMERA: {
-			cap.open(0); //otwarcie kamery
-			fps = 50;
-			break;
-		}
-		case FILM: {
-			string path = videoChoice();
-			cap.open(path); //wczytanie pliku wideo
-			fps = cap.get(CAP_PROP_FPS);
-			break;
-		}
-		case ESC: {
-			return 0;
-		}
-		default: {
-			return 1;
-		}
+			case KAMERA: {
+				cap.open(0); //otwarcie kamery
+				fps = 50;
+				break;
+			}
+			case FILM: {
+				string path = videoChoice();
+				cap.open(path); //wczytanie pliku wideo
+				fps = cap.get(CAP_PROP_FPS);
+				break;
+			}
+			case ESC: {
+				return 0;
+			}
+			default: {
+				return 1;
+			}
 		}
 
 		//komunikat o poprawnosci inicjalizacji przechwytywania
@@ -198,13 +199,12 @@ int main() {
 			cout << endl << "Inicjalizacja przechwytywania zakonczona powodzeniem." << endl;
 		}
 
-
 		//stworzenie okna dla wyswietlanego obrazu i panelu sterowania
 		EnhancedWindow settings(10, 50, 270, 200, "Panel sterowania");
 		cvui::init(WINDOW_NAME);
 		namedWindow(WINDOW_NAME);
 
-
+		//petla wykrywania pozaru/wybuchu
 		while (cap.read(frame)) {
 
 			//kopia klatki 
@@ -260,11 +260,10 @@ int main() {
 				}
 			}
 
-			//otoczka wypuk³a dla pikseli pozaru
+			//wyznaczenie prostokata wskazujacego obszar pozaru
 			boundRect = boundingRect(firePixels);
-			//zainicjowanie pliku wideo
-			video = initializeVideo(videoName, video);
-			//kopia otoczki wypuklej
+
+			//kopia prostokata wskazujacego obszar pozaru
 			currentBound = boundRect;
 
 			//wykrywanie pozaru
@@ -294,9 +293,21 @@ int main() {
 			}
 
 			//uruchomienie zapisu do pliku
-			if (fire == true && choice == KAMERA)
+			if (fire == true && choice == KAMERA) {
+				//zainicjowanie pliku wideo
+				if (!videoInitialized) {
+					video = initializeVideo(videoName, video);
+					videoInitialized = true;
+				}
 				recordVideo(video, fireDetectionFrame);
-			else video.release();
+			}
+			else {
+				video.release();
+			}
+
+			if (videoInitialized && fire == false && choice == KAMERA) {
+				videoInitialized = false;
+			}
 
 			//dostosowanie panelu sterowania
 			settings.begin(fireDetectionFrame);
@@ -323,7 +334,6 @@ int main() {
 				//imshow("Cb", fireFrameCb);
 			}
 
-
 			catch (Exception &e) {
 				cout << e.what() << endl;
 				return 1;
@@ -336,6 +346,7 @@ int main() {
 		//zamkniecie wszystkich okien i zwolnienie pamieci
 		cap.release();
 		destroyAllWindows();
+		//wyczyszczenie konsoli
 		system("cls");
 	}
 	//zamkniecie wszystkich okien i zwolnienie pamieci
