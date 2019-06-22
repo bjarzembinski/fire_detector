@@ -107,7 +107,7 @@ string prepareDateTime(string purpose) {
 }
 
 //funkcja sprawdzajaca czy piksel posiada kolor taki jak ogien
-bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int column, int threshold, int meanY, int meanCr, int meanCb) {
+bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int column, int threshold, int meanY) {
 	bool condition;
 	int valueY = frameY.at<uchar>(row, column);
 	int valueCr = frameCr.at<uchar>(row, column);
@@ -135,6 +135,19 @@ int recordVideo(VideoWriter video, Mat fireDetectionFrame) {
 	return 0;
 }
 
+int get_largest_contour_id(vector <vector<cv::Point>> contours) {
+	double largest_area = 0;
+	int largest_contour_id = 0;
+	for (int i = 0; i < contours.size(); i++) {
+		double area = contourArea(contours.at(i));
+		if (area > largest_area) {
+			largest_area = area;
+			largest_contour_id = i;
+		}
+	}
+	return largest_contour_id;
+}
+
 int main() {
 	//deklaracja obiektu przechwytywania
 	VideoCapture cap;
@@ -151,10 +164,11 @@ int main() {
 
 	//deklaracja zmiennych
 	int threshold = 60;
-	int minArea = 0;
+	int minArea = 100;
 	bool initialized = false;
 	bool use_fire = true;
 	bool use_explosion = true;
+	bool use_source_of_fire = false;
 	bool videoInitialized = false;
 	int fps;
 	Scalar meanYCrCb;
@@ -162,6 +176,9 @@ int main() {
 	Rect currentBound;
 	Rect oldBound;
 	VideoWriter video;
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+	vector<Point> largest_contour;
 
 	//ekstraktor tla MOG2
 	Ptr<BackgroundSubtractorMOG2> pMOG2;
@@ -237,11 +254,9 @@ int main() {
 			extractChannel(fireFrameYCrCb, fireFrameCr, 1);
 			extractChannel(fireFrameYCrCb, fireFrameCb, 2);
 
-			//obliczenie wartosci srednich dla poszczegolnych kanalow
+			//obliczenie wartosci sredniej luminacji
 			meanYCrCb = mean(frame);
 			int meanY = meanYCrCb[0];
-			int meanCr = meanYCrCb[1];
-			int meanCb = meanYCrCb[2];
 
 			//utworzenie wektora pikseli pozaru
 			vector<Point> firePixels;
@@ -249,26 +264,45 @@ int main() {
 			//sprawdzenie dla kazdego piksela czy jest na pierwszym planie i czy spelnia zalozenia koloru ognia
 			for (int y = 0; y < fireFrameYCrCb.rows; y++) {
 				for (int x = 0; x < fireFrameYCrCb.cols; x++) {
-					if (motionMask.at<uchar>(y, x) > 0 && isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, meanY, meanCr, meanCb)) {
-						fireMask.at<uchar>(y, x) = 255;
-						//dodanie piksela do wektora pikseli pozaru
-						firePixels.push_back(Point(x, y));
+					if (!use_source_of_fire) {
+						if (motionMask.at<uchar>(y, x) > 0 && isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, meanY)) {
+							fireMask.at<uchar>(y, x) = 255;
+							//dodanie piksela do wektora pikseli pozaru
+							firePixels.push_back(Point(x, y));
+						}
+						else {
+							fireMask.at<uchar>(y, x) = 0;
+						}
 					}
 					else {
-						fireMask.at<uchar>(y, x) = 0;
+						if (isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, meanY)) {
+							fireMask.at<uchar>(y, x) = 255;
+						}
+						else {
+							fireMask.at<uchar>(y, x) = 0;
+						}
 					}
 				}
 			}
 
 			//wyznaczenie prostokata wskazujacego obszar pozaru
-			boundRect = boundingRect(firePixels);
-
-			//kopia prostokata wskazujacego obszar pozaru
-			currentBound = boundRect;
-
+			if (use_source_of_fire) {
+				findContours(fireMask, contours, hierarchy, CV_RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0));
+				if (contours.size() > 0) {
+					int largest_contour_id = get_largest_contour_id(contours);
+					largest_contour = contours[largest_contour_id];
+					boundRect = boundingRect(largest_contour);
+					currentBound = boundRect;
+				}
+			}
+			else {
+				boundRect = boundingRect(firePixels);
+				currentBound = boundRect;
+			}
+			
 			//wykrywanie pozaru
 			if (use_fire == true) {
-				if (boundRect.area() > minArea) {
+				if (boundRect.area() > minArea && (!use_source_of_fire || (use_source_of_fire && contours.size() > 0))) {
 					//zapis pozaru do zmiennej
 					fire = true;
 					//narysowanie prostokata
@@ -276,12 +310,14 @@ int main() {
 					//umieszczenie napisu ALARM
 					putText(fireDetectionFrame, "ALARM!", Point(15, 35), FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0, 0, 255), 3);
 				}
-				else fire = false;
+				else {
+					fire = false;
+				}
 			}
 
-			//wykryanie eksplozji
+			//wykrywanie eksplozji
 			if (use_explosion == true) {
-				if (currentBound.area() > 1.5*(oldBound.area())) {
+				if (currentBound.area() > minArea && currentBound.area() > 1.5*oldBound.area() && (!use_source_of_fire || (use_source_of_fire && contours.size() > 0))) {
 					//zapis eksplozji do zmiennej
 					explosion = true;
 					//umieszczenie napisu EKSPLOZJA
@@ -289,7 +325,9 @@ int main() {
 					//obecna klatka staje sie stara klatka
 					oldBound = currentBound;
 				}
-				else explosion = false;
+				else {
+					explosion = false;
+				}
 			}
 
 			//uruchomienie zapisu do pliku
@@ -327,11 +365,6 @@ int main() {
 
 				//wyswietlenie obrazow
 				cvui::imshow(WINDOW_NAME, fireDetectionFrame);
-				//imshow("maska ruchu", motionMask);
-				//imshow("maska ognia", fireMask);
-				//imshow("Y", fireFrameY);
-				//imshow("Cr", fireFrameCr);
-				//imshow("Cb", fireFrameCb);
 			}
 
 			catch (Exception &e) {
