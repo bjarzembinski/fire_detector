@@ -28,7 +28,6 @@
 using namespace cv;
 using namespace std;
 namespace fs = std::experimental::filesystem;
-using namespace System;
 
 
 //zmienne globalne dla sciezek
