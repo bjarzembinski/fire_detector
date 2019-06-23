@@ -359,7 +359,7 @@ int main() {
 				cvui::space(5);
 				cvui::checkbox("Detekcja eksplozji", &use_explosion);
 				cvui::space(5);
-				cvui::checkbox("Source of fire", &use_source_of_fire);
+				cvui::checkbox("èrÛd≥o pozaru", &use_source_of_fire);
 			}
 			settings.end();
 
