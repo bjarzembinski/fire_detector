@@ -28,8 +28,8 @@ using namespace std;
 namespace fs = std::experimental::filesystem;
 
 //zmienne globalne dla sciezek
-string videosPath = "C:/00 Documents/opencv/Project/videos/"; //sciezka do folderu z filmami
-string outputpath = "C:/00 Documents/opencv/Project/output/"; //sciezka do folderu output
+string videosPath = "C:/Users/joann/Desktop/opencv/videos/"; //sciezka do folderu z filmami
+string outputpath = "C:/Users/joann/Desktop/opencv/output/"; //sciezka do folderu output
 
 //zmienne globalne dla alarmu
 bool fire = false;
@@ -189,23 +189,23 @@ int main() {
 		int mode = menu();
 
 		switch (mode) {
-			case KAMERA: {
-				cap.open(0); //otwarcie kamery
-				fps = 50;
-				break;
-			}
-			case FILM: {
-				string path = videoChoice();
-				cap.open(path); //wczytanie pliku wideo
-				fps = cap.get(CAP_PROP_FPS);
-				break;
-			}
-			case ESC: {
-				return 0;
-			}
-			default: {
-				return 1;
-			}
+		case KAMERA: {
+			cap.open(0); //otwarcie kamery
+			fps = 50;
+			break;
+		}
+		case FILM: {
+			string path = videoChoice();
+			cap.open(path); //wczytanie pliku wideo
+			fps = cap.get(CAP_PROP_FPS);
+			break;
+		}
+		case ESC: {
+			return 0;
+		}
+		default: {
+			return 1;
+		}
 		}
 
 		//komunikat o poprawnosci inicjalizacji przechwytywania
@@ -217,7 +217,7 @@ int main() {
 		}
 
 		//stworzenie okna dla wyswietlanego obrazu i panelu sterowania
-		EnhancedWindow settings(10, 50, 270, 200, "Panel sterowania");
+		EnhancedWindow settings(368, 2, 270, 210, "Panel sterowania");
 		cvui::init(WINDOW_NAME);
 		namedWindow(WINDOW_NAME);
 
@@ -299,7 +299,7 @@ int main() {
 				boundRect = boundingRect(firePixels);
 				currentBound = boundRect;
 			}
-			
+
 			//wykrywanie pozaru
 			if (use_fire == true) {
 				if (boundRect.area() > minArea && (!use_source_of_fire || (use_source_of_fire && contours.size() > 0))) {
@@ -358,6 +358,8 @@ int main() {
 				cvui::checkbox("Detekcja pozaru", &use_fire);
 				cvui::space(5);
 				cvui::checkbox("Detekcja eksplozji", &use_explosion);
+				cvui::space(5);
+				cvui::checkbox("Source of fire", &use_source_of_fire);
 			}
 			settings.end();
 
