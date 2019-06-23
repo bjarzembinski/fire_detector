@@ -1,4 +1,4 @@
-#include <conio.h>
+Ôªø#include <conio.h>
 #include <iostream>
 #include <filesystem>
 #include <stdio.h>
@@ -12,11 +12,13 @@
 #include <opencv2/video.hpp>
 #include <opencv2/opencv.hpp>
 
+
 //inicjalizacja interfejsu
 #define CVUI_IMPLEMENTATION
 #include "opencv2/cvui.h"
 #include "opencv2/EnhancedWindow.h" 
 #define WINDOW_NAME	"Detektor pozarow i eksplozji"
+
 
 //skroty klawiszowe
 #define ESC 27
@@ -26,6 +28,8 @@
 using namespace cv;
 using namespace std;
 namespace fs = std::experimental::filesystem;
+using namespace System;
+
 
 //zmienne globalne dla sciezek
 string videosPath = "C:/Users/joann/Desktop/opencv/videos/"; //sciezka do folderu z filmami
@@ -35,6 +39,7 @@ string outputpath = "C:/Users/joann/Desktop/opencv/output/"; //sciezka do folder
 bool fire = false;
 bool explosion = false;
 int choice;
+
 
 //funkcja wyboru zrodla obrazu
 int menu() {
@@ -359,9 +364,11 @@ int main() {
 				cvui::space(5);
 				cvui::checkbox("Detekcja eksplozji", &use_explosion);
 				cvui::space(5);
-				cvui::checkbox("èrÛd≥o pozaru", &use_source_of_fire);
+				cvui::checkbox("Zrodlo pozaru", &use_source_of_fire);
 			}
 			settings.end();
+
+			cvui::image(fireDetectionFrame, 10, 10, fireFrameYCrCb);
 
 			try {
 
