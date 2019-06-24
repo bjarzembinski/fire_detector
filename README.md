@@ -6,8 +6,14 @@ Napisać program, który wykrywa nocne pożary i eksplozje, a następnie wywołu
 
 # Zrealizowane funkcje:
 - menu z wyborem źródła: kamera i plik video (po zakończonym/przerwanym wykrywaniu pożaru/wybuchu następuje powrót do menu)
-- wykrywanie pożaru/eksplozji w porze dziennej i nocnej
+- aktualny czas i data wyświetlany na obrazie
+- wykrywanie pożaru oraz eksplozji w porze dziennej i nocnej
 - zaznaczanie pożaru na video
-- zapisywanie video po wykryciu pożaru (tylko dla kamery)
+- sygnalizowanie wykrytego pożaru oraz eksplozji stosownym komunikatem na ekranie
+- zapisywanie video po wykryciu pożaru (tylko dla kamery) do pliku
 - tryb całego pożaru/źródła pożaru
-- interfejs do bieżącej modyfikacji trybów oraz progów
+- interfejs oparty na cviu.h i EnhancedWindow.h umożliwiający modyfikowanie progów w czasie rzeczywistym oraz zarządzanie funkcjami programu
+
+# Hardware
+Do programu został zbudowany interpreter sprzętowy oparty o płytkę Arduino Uno imitujący syrenę alarmową. 
+Więcej informacji na temat koncepcji, budowy oraz sposobu działania znajduje się z folderze Arduino.
