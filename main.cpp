@@ -31,8 +31,8 @@ namespace fs = std::experimental::filesystem;
 
 
 //zmienne globalne dla sciezek
-string videosPath = "C:/Users/joann/Desktop/opencv/videos/"; //sciezka do folderu z filmami
-string outputpath = "C:/Users/joann/Desktop/opencv/output/"; //sciezka do folderu output
+string videosPath = "C:/00 Documents/opencv/Project/videos/"; //sciezka do folderu z filmami
+string outputpath = "C:/00 Documents/opencv/Project/output/"; //sciezka do folderu output
 
 //zmienne globalne dla alarmu
 bool fire = false;
@@ -92,6 +92,16 @@ string videoChoice() {
 	}
 }
 
+//funkcja drukujaca komunikat o poprawnosci inicjalizacji przechwytywania
+void checkInitialization(VideoCapture cap) {
+	if (!cap.isOpened()) {
+		cout << endl << "Inicjalizacja przechwytywania zakonczona niepowodzeniem." << endl;
+	}
+	else {
+		cout << endl << "Inicjalizacja przechwytywania zakonczona powodzeniem." << endl;
+	}
+}
+
 //funkcja przygotowujaca date i czas 
 string prepareDateTime(string purpose) {
 	SYSTEMTIME lt;
@@ -111,13 +121,13 @@ string prepareDateTime(string purpose) {
 }
 
 //funkcja sprawdzajaca czy piksel posiada kolor taki jak ogien
-bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int column, int threshold, int meanY) {
+bool isFireColor(Mat frameY, Mat frameCr, Mat frameCb, const int row, const int column, int threshold, int luminationThreshold, int meanY) {
 	bool condition;
 	int valueY = frameY.at<uchar>(row, column);
 	int valueCr = frameCr.at<uchar>(row, column);
 	int valueCb = frameCb.at<uchar>(row, column);
 
-	if ((valueY > valueCb) && (valueCr > valueCb + threshold) && (valueY > meanY)) {
+	if ((valueY > valueCb) && (valueCr > valueCb + threshold) && (valueY > meanY + luminationThreshold)) {
 		return true;
 	}
 	else {
@@ -134,11 +144,13 @@ VideoWriter initializeVideo(string outputVideoName, VideoWriter video) {
 	return video;
 }
 
+//funckja zapisujaca wideo
 int recordVideo(VideoWriter video, Mat fireDetectionFrame) {
 	if (fire) video.write(fireDetectionFrame);
 	return 0;
 }
 
+//funkcja zwracajaca id najwiekszego konturu
 int get_largest_contour_id(vector <vector<cv::Point>> contours) {
 	double largest_area = 0;
 	int largest_contour_id = 0;
@@ -168,7 +180,8 @@ int main() {
 
 	//deklaracja zmiennych
 	int threshold = 60;
-	int minArea = 100;
+	int luminationThreshold = 5;
+	int minArea = 200;
 	bool initialized = false;
 	bool use_fire = true;
 	bool use_explosion = true;
@@ -213,15 +226,10 @@ int main() {
 		}
 
 		//komunikat o poprawnosci inicjalizacji przechwytywania
-		if (!cap.isOpened()) {
-			cout << endl << "Inicjalizacja przechwytywania zakonczona niepowodzeniem." << endl;
-		}
-		else {
-			cout << endl << "Inicjalizacja przechwytywania zakonczona powodzeniem." << endl;
-		}
+		checkInitialization(cap);
 
 		//stworzenie okna dla wyswietlanego obrazu i panelu sterowania
-		EnhancedWindow settings(368, 2, 270, 210, "Panel sterowania");
+		EnhancedWindow settings(368, 2, 270, 275, "Panel sterowania");
 		cvui::init(WINDOW_NAME);
 		namedWindow(WINDOW_NAME);
 
@@ -269,7 +277,7 @@ int main() {
 			for (int y = 0; y < fireFrameYCrCb.rows; y++) {
 				for (int x = 0; x < fireFrameYCrCb.cols; x++) {
 					if (!use_source_of_fire) {
-						if (motionMask.at<uchar>(y, x) > 0 && isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, meanY)) {
+						if (motionMask.at<uchar>(y, x) > 0 && isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, luminationThreshold, meanY)) {
 							fireMask.at<uchar>(y, x) = 255;
 							//dodanie piksela do wektora pikseli pozaru
 							firePixels.push_back(Point(x, y));
@@ -279,7 +287,7 @@ int main() {
 						}
 					}
 					else {
-						if (isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, meanY)) {
+						if (isFireColor(fireFrameY, fireFrameCr, fireFrameCb, y, x, threshold, luminationThreshold, meanY)) {
 							fireMask.at<uchar>(y, x) = 255;
 						}
 						else {
@@ -356,6 +364,10 @@ int main() {
 			if (!settings.isMinimized()) {
 				cvui::text("Treshold", 0.4, 0xff0000);
 				cvui::trackbar(settings.width() - 20, &threshold, 1, 150);
+				cvui::space(3);
+				cvui::text("Lumination treshold", 0.4, 0xff0000);
+				cvui::trackbar(settings.width() - 20, &luminationThreshold, 0, 100);
+				cvui::space(3);
 				cvui::text("Min Area", 0.4, 0xff0000);
 				cvui::trackbar(settings.width() - 20, &minArea, 1, 10000);
 				cvui::space(10);
@@ -366,8 +378,6 @@ int main() {
 				cvui::checkbox("Zrodlo pozaru", &use_source_of_fire);
 			}
 			settings.end();
-
-			cvui::image(fireDetectionFrame, 10, 10, fireFrameYCrCb);
 
 			try {
 
