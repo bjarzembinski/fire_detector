@@ -31,8 +31,8 @@ namespace fs = std::experimental::filesystem;
 
 
 //zmienne globalne dla sciezek
-string videosPath = "C:/00 Documents/opencv/Project/videos/"; //sciezka do folderu z filmami
-string outputpath = "C:/00 Documents/opencv/Project/output/"; //sciezka do folderu output
+string videosPath = "C:/Users/joann/Desktop/opencv/videos/"; //sciezka do folderu z filmami
+string outputpath = "C:/Users/joann/Desktop/opencv/output/"; //sciezka do folderu output
 
 //zmienne globalne dla alarmu
 bool fire = false;
@@ -187,7 +187,11 @@ int main() {
 	bool use_explosion = true;
 	bool use_source_of_fire = false;
 	bool videoInitialized = false;
+	bool countfire = false;
+	bool countexpl = false;
 	int fps;
+	int f = 0;
+	int ex = 0;
 	Scalar meanYCrCb;
 	Rect boundRect;
 	Rect currentBound;
@@ -247,7 +251,12 @@ int main() {
 			//umieszczenie daty i czasu na obrazie
 			putText(fireDetectionFrame, datetimeFrame, Point(15, 465), FONT_HERSHEY_SIMPLEX, 1.25, Scalar(255, 255, 255), 2);
 
-			//inicjalizacja maski ognia
+			//umieszczenie licznikow na obrazie
+			putText(fireDetectionFrame,"Pozarow "+to_string(f), Point(15, 300), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 2);
+			putText(fireDetectionFrame, "Explozji "+to_string(ex), Point(15, 320), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 2);
+
+
+			//inicjalizacja maski ognia 
 			if (initialized == false) {
 				fireMask = Mat(frame.rows, frame.cols, CV_8UC1);
 				initialized = true;
@@ -359,6 +368,30 @@ int main() {
 				videoInitialized = false;
 			}
 
+			if (fire == true) {
+				if (!countfire) {
+					//zwiekszenie licznika pozarow
+					f++;
+					countfire = true;
+				}
+			}
+
+			if (countfire && fire == false) {
+				countfire = false;
+			}
+
+			if (explosion == true) {
+				if (!countexpl) {
+					//zwiekszenie licznika eksplozji
+					ex++;
+					countexpl = true;
+				}
+			}
+
+			if (countexpl && explosion == false) {
+				countexpl = false;
+			}
+
 			//dostosowanie panelu sterowania
 			settings.begin(fireDetectionFrame);
 			if (!settings.isMinimized()) {
@@ -394,6 +427,8 @@ int main() {
 				break;
 			}
 		}
+
+
 		//zamkniecie wszystkich okien i zwolnienie pamieci
 		cap.release();
 		destroyAllWindows();
