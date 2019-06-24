@@ -22,4 +22,4 @@ W stanie gotowości - kiedy urządzenie alarmowe jest prawidłowo podłączone -
 
 # Oprogramowanie
 Skrypt dla płytki został stowrzony w środowisku Arduino IDE. Komunikacja odbywa się przy pomocy portu szeregowego COM.
-W Visual Studio wykorzystano bibliotekę Tserial do obsługi portu szeregowego bez konieczności konwersji na aplikację CLR. 
+W Visual Studio wykorzystano bibliotekę Tserial do obsługi portu szeregowego bez konieczności konwersji na aplikację CLR. Powstała również wersja z obsługą alarmu przy pomocy pilota bezprzewodowego wykorzystującego komunikację przy pomocy podczerwieni. 
