@@ -10,6 +10,7 @@ Napisać program, który wykrywa nocne pożary i eksplozje, a następnie wywołu
 - wykrywanie pożaru oraz eksplozji w porze dziennej i nocnej
 - zaznaczanie pożaru na video
 - sygnalizowanie wykrytego pożaru oraz eksplozji stosownym komunikatem na ekranie
+- zliczanie w czasie rzeczywistym liczby pozarow i eksplozji na filmie oraz obrazie z kamery i wyswietlanie na ekranie
 - zapisywanie video po wykryciu pożaru (tylko dla kamery) do pliku
 - tryb całego pożaru/źródła pożaru
 - interfejs oparty na cviu.h i EnhancedWindow.h umożliwiający modyfikowanie progów w czasie rzeczywistym oraz zarządzanie funkcjami programu
